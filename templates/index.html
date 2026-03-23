@@ -1,51 +1,105 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>WhatsApp Reminder</title>
-    <link rel="stylesheet" href="/static/style.css" />
-  </head>
-  <body>
-    <div class="container">
-      <h1>WhatsApp Reminder</h1>
+{% extends "base.html" %}
+{% block title %}Schedule Reminder — WhatsApp Reminder{% endblock %}
 
-      <form method="POST">
-        <label for="name">Customer name</label>
-        <input id="name" name="name" type="text" required />
+{% block content %}
+<div class="page-header">
+  <h1 class="page-header__title">Schedule a Reminder</h1>
+  <p class="page-header__subtitle">Send a WhatsApp message at the perfect time</p>
+</div>
 
-        <label for="phone">Phone number (include country code digits)</label>
-        <input
-          id="phone"
-          name="phone"
-          type="text"
-          required
-          placeholder="919876543210"
-        />
-
-        <label for="message">Message</label>
-        <textarea id="message" name="message" required rows="4"></textarea>
-
-        <label for="time">Reminder date/time</label>
-        <input id="time" name="time" type="datetime-local" required />
-
-        <button type="submit">Schedule</button>
-      </form>
-
-      {% if success %}
-      <div class="success" role="status">{{ success }}</div>
-      {% endif %}
-
-      {% if error %}
-      <div class="error" role="alert">{{ error }}</div>
-      {% endif %}
-
-      <p class="hint">
-        Uses Twilio WhatsApp API. Set env vars:
-        <code>TWILIO_ACCOUNT_SID</code>, <code>TWILIO_AUTH_TOKEN</code>,
-        and optionally <code>TWILIO_WHATSAPP_FROM</code>.
-      </p>
+<div class="card card--form">
+  <form method="POST" class="form" id="reminder-form">
+    <div class="form__group">
+      <label for="name" class="form__label">
+        <span class="form__label-icon">👤</span> Recipient Name
+      </label>
+      <input
+        id="name"
+        name="name"
+        type="text"
+        class="form__input"
+        required
+        placeholder="e.g. John Doe"
+        autocomplete="name"
+      />
     </div>
-  </body>
-</html>
 
+    <div class="form__group">
+      <label for="phone" class="form__label">
+        <span class="form__label-icon">📱</span> Phone Number
+      </label>
+      <input
+        id="phone"
+        name="phone"
+        type="text"
+        class="form__input"
+        required
+        placeholder="919876543210"
+        pattern="[0-9]{8,15}"
+        title="Enter digits with country code, e.g. 919876543210"
+      />
+      <span class="form__hint">Include country code without + (e.g. 91 for India, 1 for US)</span>
+    </div>
+
+    <div class="form__group">
+      <label for="message" class="form__label">
+        <span class="form__label-icon">✉️</span> Message
+      </label>
+      <textarea
+        id="message"
+        name="message"
+        class="form__textarea"
+        required
+        rows="4"
+        placeholder="Hey! Just a friendly reminder about…"
+        maxlength="1600"
+      ></textarea>
+      <span class="form__hint form__hint--counter">
+        <span id="char-count">0</span> / 1600
+      </span>
+    </div>
+
+    <div class="form__group">
+      <label for="time" class="form__label">
+        <span class="form__label-icon">🕐</span> Date &amp; Time
+      </label>
+      <input
+        id="time"
+        name="time"
+        type="datetime-local"
+        class="form__input"
+        required
+      />
+    </div>
+
+    <button type="submit" class="btn btn--primary" id="submit-btn">
+      <span class="btn__icon">🚀</span> Schedule Reminder
+    </button>
+  </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Character counter
+  const textarea = document.getElementById('message');
+  const counter = document.getElementById('char-count');
+  textarea.addEventListener('input', () => {
+    counter.textContent = textarea.value.length;
+    counter.parentElement.classList.toggle('form__hint--warning', textarea.value.length > 1500);
+  });
+
+  // Set min datetime to now
+  const timeInput = document.getElementById('time');
+  const now = new Date();
+  now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+  timeInput.min = now.toISOString().slice(0, 16);
+
+  // Submit animation
+  document.getElementById('reminder-form').addEventListener('submit', function() {
+    const btn = document.getElementById('submit-btn');
+    btn.classList.add('btn--loading');
+    btn.innerHTML = '<span class="spinner"></span> Scheduling…';
+  });
+</script>
+{% endblock %}

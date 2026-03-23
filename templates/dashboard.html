@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — WhatsApp Reminder{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1 class="page-header__title">Dashboard</h1>
+  <p class="page-header__subtitle">Track and manage all your reminders</p>
+</div>
+
+<!-- Stats Cards -->
+<div class="stats-grid">
+  <div class="stat-card stat-card--total">
+    <div class="stat-card__icon">📋</div>
+    <div class="stat-card__info">
+      <span class="stat-card__value">{{ stats.total }}</span>
+      <span class="stat-card__label">Total</span>
+    </div>
+  </div>
+  <div class="stat-card stat-card--pending">
+    <div class="stat-card__icon">⏳</div>
+    <div class="stat-card__info">
+      <span class="stat-card__value">{{ stats.pending }}</span>
+      <span class="stat-card__label">Pending</span>
+    </div>
+  </div>
+  <div class="stat-card stat-card--sent">
+    <div class="stat-card__icon">✅</div>
+    <div class="stat-card__info">
+      <span class="stat-card__value">{{ stats.sent }}</span>
+      <span class="stat-card__label">Sent</span>
+    </div>
+  </div>
+  <div class="stat-card stat-card--failed">
+    <div class="stat-card__icon">❌</div>
+    <div class="stat-card__info">
+      <span class="stat-card__value">{{ stats.failed }}</span>
+      <span class="stat-card__label">Failed</span>
+    </div>
+  </div>
+</div>
+
+<!-- Reminders Table -->
+<div class="card card--table">
+  {% if reminders %}
+  <div class="table-wrapper">
+    <table class="table" id="reminders-table">
+      <thead>
+        <tr>
+          <th>Recipient</th>
+          <th>Phone</th>
+          <th>Message</th>
+          <th>Scheduled Time</th>
+          <th>Status</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in reminders %}
+        <tr class="table__row table__row--{{ r.status or 'pending' }}">
+          <td class="table__cell table__cell--name">
+            <span class="avatar">{{ r.name[0] | upper if r.name else '?' }}</span>
+            {{ r.name }}
+          </td>
+          <td class="table__cell table__cell--phone">
+            <code>+{{ r.phone }}</code>
+          </td>
+          <td class="table__cell table__cell--message" title="{{ r.message }}">
+            {{ r.message[:80] }}{% if r.message|length > 80 %}…{% endif %}
+          </td>
+          <td class="table__cell table__cell--time">
+            {{ r.time }}
+          </td>
+          <td class="table__cell table__cell--status">
+            <span class="badge badge--{{ r.status or 'pending' }}">
+              {% if r.status == 'sent' %}✅ Sent
+              {% elif r.status == 'failed' %}❌ Failed
+              {% else %}⏳ Pending
+              {% endif %}
+            </span>
+          </td>
+          <td class="table__cell table__cell--action">
+            <form method="POST" action="/reminders/{{ r.id }}/delete" class="inline-form"
+                  onsubmit="return confirm('Delete this reminder?')">
+              <button type="submit" class="btn btn--danger btn--sm" title="Delete reminder">
+                🗑️
+              </button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <div class="empty-state__icon">📭</div>
+    <h3 class="empty-state__title">No reminders yet</h3>
+    <p class="empty-state__text">Schedule your first WhatsApp reminder to see it here.</p>
+    <a href="/" class="btn btn--primary">
+      <span class="btn__icon">➕</span> Create Reminder
+    </a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{% block title %}WhatsApp Reminder{% endblock %}</title>
+    <meta name="description" content="Schedule WhatsApp reminders with ease — powered by Twilio." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/static/style.css" />
+  </head>
+  <body>
+    <!-- Animated background orbs -->
+    <div class="bg-orb bg-orb--1"></div>
+    <div class="bg-orb bg-orb--2"></div>
+    <div class="bg-orb bg-orb--3"></div>
+
+    <!-- Navigation -->
+    <nav class="navbar">
+      <div class="navbar__brand">
+        <span class="navbar__icon">💬</span>
+        <span class="navbar__title">WhatsApp Reminder</span>
+      </div>
+      <div class="navbar__links">
+        <a href="/" class="navbar__link {% if request.endpoint == 'index' %}navbar__link--active{% endif %}">
+          <span class="navbar__link-icon">➕</span> New Reminder
+        </a>
+        <a href="/dashboard" class="navbar__link {% if request.endpoint == 'dashboard' %}navbar__link--active{% endif %}">
+          <span class="navbar__link-icon">📊</span> Dashboard
+        </a>
+      </div>
+    </nav>
+
+    <!-- Flash messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="flash-container">
+          {% for category, message in messages %}
+            <div class="flash flash--{{ category }}" role="{% if category == 'error' %}alert{% else %}status{% endif %}">
+              <span class="flash__icon">
+                {% if category == 'success' %}✅{% elif category == 'error' %}❌{% else %}ℹ️{% endif %}
+              </span>
+              <span class="flash__text">{{ message }}</span>
+              <button class="flash__close" onclick="this.parentElement.remove()" aria-label="Dismiss">&times;</button>
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    <!-- Main content -->
+    <main class="main">
+      {% block content %}{% endblock %}
+    </main>
+
+    <footer class="footer">
+      <p>Powered by <strong>Twilio</strong> &middot; Built with <strong>Flask</strong></p>
+    </footer>
+
+    <script>
+      // Auto-dismiss flash messages after 5s
+      document.querySelectorAll('.flash').forEach(el => {
+        setTimeout(() => {
+          el.style.animation = 'slideOut 0.4s ease forwards';
+          setTimeout(() => el.remove(), 400);
+        }, 5000);
+      });
+    </script>
+    {% block scripts %}{% endblock %}
+  </body>
+</html>
