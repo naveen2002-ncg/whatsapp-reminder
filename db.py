@@ -3,11 +3,13 @@ import sqlite3
 from pathlib import Path
 
 
-# Use /var/data for persistent storage on Render, local folder otherwise
+# Use appropriate path for database based on environment
+# On Render: use /tmp for ephemeral storage (data lost on sleep)
+# On local: use local folder
 if os.environ.get("RENDER"):
-    DB_PATH = Path("/var/data/reminders.db")
-    # Ensure the directory exists
-    DB_PATH.parent.mkdir(parents=True, exist_ok=True)
+    # Render free tier: use /tmp (ephemeral, data lost after sleep)
+    # For persistence, upgrade to Render Disk or use external DB
+    DB_PATH = Path("/tmp/reminders.db")
 else:
     DB_PATH = Path(__file__).resolve().parent / "reminders.db"
 
