@@ -1,8 +1,15 @@
+import os
 import sqlite3
 from pathlib import Path
 
 
-DB_PATH = Path(__file__).resolve().parent / "reminders.db"
+# Use /var/data for persistent storage on Render, local folder otherwise
+if os.environ.get("RENDER"):
+    DB_PATH = Path("/var/data/reminders.db")
+    # Ensure the directory exists
+    DB_PATH.parent.mkdir(parents=True, exist_ok=True)
+else:
+    DB_PATH = Path(__file__).resolve().parent / "reminders.db"
 
 
 def get_conn() -> sqlite3.Connection:
