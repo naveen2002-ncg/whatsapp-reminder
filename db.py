@@ -1,7 +1,9 @@
 import os
 import sqlite3
+import logging
 from pathlib import Path
 
+logger = logging.getLogger(__name__)
 
 # Use appropriate path for database based on environment
 # On Render: use /tmp for ephemeral storage (data lost on sleep)
@@ -10,8 +12,13 @@ if os.environ.get("RENDER"):
     # Render free tier: use /tmp (ephemeral, data lost after sleep)
     # For persistence, upgrade to Render Disk or use external DB
     DB_PATH = Path("/tmp/reminders.db")
+    logger.info(f"[DIAGNOSTIC] Running on Render, using DB_PATH={DB_PATH}")
 else:
     DB_PATH = Path(__file__).resolve().parent / "reminders.db"
+    logger.info(f"[DIAGNOSTIC] Running locally, using DB_PATH={DB_PATH}")
+
+# Ensure database directory exists
+DB_PATH.parent.mkdir(parents=True, exist_ok=True)
 
 
 def get_conn() -> sqlite3.Connection:
@@ -21,27 +28,33 @@ def get_conn() -> sqlite3.Connection:
 
 
 def init_db() -> None:
-    conn = get_conn()
-    cursor = conn.cursor()
-    cursor.execute(
-        """
-        CREATE TABLE IF NOT EXISTS reminders (
-            id INTEGER PRIMARY KEY,
-            name TEXT,
-            phone TEXT,
-            message TEXT,
-            time TEXT,
-            status TEXT DEFAULT 'pending'
-        )
-        """
-    )
-    # Migrate: add status column if table existed before this change.
     try:
-        cursor.execute("ALTER TABLE reminders ADD COLUMN status TEXT DEFAULT 'pending'")
-    except sqlite3.OperationalError:
-        pass  # Column already exists.
-    conn.commit()
-    conn.close()
+        logger.info(f"[DIAGNOSTIC] init_db() called, DB_PATH={DB_PATH}")
+        conn = get_conn()
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS reminders (
+                id INTEGER PRIMARY KEY,
+                name TEXT,
+                phone TEXT,
+                message TEXT,
+                time TEXT,
+                status TEXT DEFAULT 'pending'
+            )
+            """
+        )
+        # Migrate: add status column if table existed before this change.
+        try:
+            cursor.execute("ALTER TABLE reminders ADD COLUMN status TEXT DEFAULT 'pending'")
+        except sqlite3.OperationalError:
+            pass  # Column already exists.
+        conn.commit()
+        conn.close()
+        logger.info("[DIAGNOSTIC] init_db() completed successfully")
+    except Exception as e:
+        logger.error(f"[DIAGNOSTIC] init_db() FAILED: {e}")
+        raise
 
 
 def insert_reminder(name: str, phone: str, message: str, time_str: str) -> int:
