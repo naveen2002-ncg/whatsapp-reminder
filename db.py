@@ -6,15 +6,20 @@ from pathlib import Path
 logger = logging.getLogger(__name__)
 
 # Use appropriate path for database based on environment
-# Priority: DATABASE_PATH > RAILWAY_VOLUME_PATH > RENDER > local
+# Priority: DATABASE_PATH > FLY_APP_NAME (Fly.io) > RAILWAY_VOLUME_PATH > RENDER > local
 RAILWAY_VOLUME_PATH = os.environ.get("RAILWAY_VOLUME_PATH", "")
 RENDER = os.environ.get("RENDER", "")
+FLY_APP_NAME = os.environ.get("FLY_APP_NAME", "")
 DATABASE_PATH = os.environ.get("DATABASE_PATH", "")
 
 if DATABASE_PATH:
     # Explicit DATABASE_PATH provided
     DB_PATH = Path(DATABASE_PATH)
     logger.info(f"[DIAGNOSTIC] Using explicit DATABASE_PATH={DB_PATH}")
+elif FLY_APP_NAME:
+    # Fly.io: use /data directory (persistent volume)
+    DB_PATH = Path("/data/reminders.db")
+    logger.info(f"[DIAGNOSTIC] Running on Fly.io, using DB_PATH={DB_PATH}")
 elif RAILWAY_VOLUME_PATH:
     # Railway: use persistent volume
     DB_PATH = Path(RAILWAY_VOLUME_PATH) / "reminders.db"
