@@ -46,30 +46,49 @@ def get_conn() -> sqlite3.Connection:
 def init_db() -> None:
     try:
         logger.info(f"[DIAGNOSTIC] init_db() called, DB_PATH={DB_PATH}")
+        # Ensure parent directory exists
+        DB_PATH.parent.mkdir(parents=True, exist_ok=True)
+        logger.info(f"[DIAGNOSTIC] Database directory ready: {DB_PATH.parent}")
+        
         conn = get_conn()
         cursor = conn.cursor()
-        cursor.execute(
-            """
-            CREATE TABLE IF NOT EXISTS reminders (
-                id INTEGER PRIMARY KEY,
-                name TEXT,
-                phone TEXT,
-                message TEXT,
-                time TEXT,
-                status TEXT DEFAULT 'pending'
+        
+        # Check if table exists
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='reminders'")
+        table_exists = cursor.fetchone()
+        
+        if table_exists:
+            logger.info("[DIAGNOSTIC] Table 'reminders' already exists")
+        else:
+            logger.info("[DIAGNOSTIC] Creating 'reminders' table...")
+            cursor.execute(
+                """
+                CREATE TABLE reminders (
+                    id INTEGER PRIMARY KEY,
+                    name TEXT,
+                    phone TEXT,
+                    message TEXT,
+                    time TEXT,
+                    status TEXT DEFAULT 'pending'
+                )
+                """
             )
-            """
-        )
-        # Migrate: add status column if table existed before this change.
+            logger.info("[DIAGNOSTIC] Table 'reminders' created successfully")
+        
+        # Try to add status column if it doesn't exist (for old databases)
         try:
             cursor.execute("ALTER TABLE reminders ADD COLUMN status TEXT DEFAULT 'pending'")
+            logger.info("[DIAGNOSTIC] Added 'status' column")
         except sqlite3.OperationalError:
-            pass  # Column already exists.
+            pass  # Column already exists
+        
         conn.commit()
         conn.close()
         logger.info("[DIAGNOSTIC] init_db() completed successfully")
     except Exception as e:
-        logger.error(f"[DIAGNOSTIC] init_db() FAILED: {e}")
+        logger.error(f"[DIAGNOSTIC] init_db() FAILED: {type(e).__name__}: {e}")
+        import traceback
+        logger.error(traceback.format_exc())
         raise
 
 
