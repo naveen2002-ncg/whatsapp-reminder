@@ -25,8 +25,19 @@ elif RAILWAY_VOLUME_PATH:
     DB_PATH = Path(RAILWAY_VOLUME_PATH) / "reminders.db"
     logger.info(f"[DIAGNOSTIC] Running on Railway, using DB_PATH={DB_PATH}")
 elif RENDER:
-    # Render: use /tmp (ephemeral, data lost after sleep)
-    DB_PATH = Path("/tmp/reminders.db")
+    # Render: try /tmp first, fallback to project directory
+    import tempfile
+    temp_db = Path(tempfile.gettempdir()) / "reminders.db"
+    project_db = Path("/opt/render/project/src/reminders.db")
+    
+    if temp_db.parent.exists() and os.access(temp_db.parent, os.W_OK):
+        DB_PATH = temp_db
+    elif project_db.parent.exists() and os.access(project_db.parent, os.W_OK):
+        DB_PATH = project_db
+    else:
+        # Fallback to /tmp
+        DB_PATH = temp_db
+    
     logger.info(f"[DIAGNOSTIC] Running on Render, using DB_PATH={DB_PATH}")
 else:
     # Local development
