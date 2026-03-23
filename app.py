@@ -148,13 +148,18 @@ def whatsapp_webhook():
         from db import get_all_reminders, update_reminder_status
         
         reminders = get_all_reminders()
+        logger.info(f"[DIAGNOSTIC] Found {len(reminders)} reminders in database")
         for reminder in reminders:
-            reminder_phone_digits = re.sub(r"\D", "", reminder[2])  # phone is column index 2
+            reminder_phone = reminder.get('phone', '')
+            reminder_phone_digits = re.sub(r"\D", "", reminder_phone)
+            reminder_status = reminder.get('status', '')
+            reminder_id = reminder.get('id')
+            logger.info(f"[DIAGNOSTIC] Checking reminder: id={reminder_id}, phone={reminder_phone_digits}, status={reminder_status}")
             # Check if phone numbers match (last 10 digits)
             if digits[-10:] == reminder_phone_digits[-10:]:
-                if reminder[4] in ('pending', 'sent'):  # status is column index 4
-                    update_reminder_status(reminder[0], "acknowledged")
-                    logger.info(f"[DIAGNOSTIC] Marked reminder_id={reminder[0]} as acknowledged for phone {digits[-10:]}")
+                if reminder_status in ('pending', 'sent'):
+                    update_reminder_status(reminder_id, "acknowledged")
+                    logger.info(f"[DIAGNOSTIC] Marked reminder_id={reminder_id} as acknowledged for phone {digits[-10:]}")
                     acknowledged = True
                     break
     except Exception as e:
