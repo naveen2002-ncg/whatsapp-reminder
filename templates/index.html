@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>WhatsApp Reminder</title>
+    <link rel="stylesheet" href="/static/style.css" />
+  </head>
+  <body>
+    <div class="container">
+      <h1>WhatsApp Reminder</h1>
+
+      <form method="POST">
+        <label for="name">Customer name</label>
+        <input id="name" name="name" type="text" required />
+
+        <label for="phone">Phone number (include country code digits)</label>
+        <input
+          id="phone"
+          name="phone"
+          type="text"
+          required
+          placeholder="919876543210"
+        />
+
+        <label for="message">Message</label>
+        <textarea id="message" name="message" required rows="4"></textarea>
+
+        <label for="time">Reminder date/time</label>
+        <input id="time" name="time" type="datetime-local" required />
+
+        <button type="submit">Schedule</button>
+      </form>
+
+      {% if success %}
+      <div class="success" role="status">{{ success }}</div>
+      {% endif %}
+
+      {% if error %}
+      <div class="error" role="alert">{{ error }}</div>
+      {% endif %}
+
+      <p class="hint">
+        Uses Twilio WhatsApp API. Set env vars:
+        <code>TWILIO_ACCOUNT_SID</code>, <code>TWILIO_AUTH_TOKEN</code>,
+        and optionally <code>TWILIO_WHATSAPP_FROM</code>.
+      </p>
+    </div>
+  </body>
+</html>
+
