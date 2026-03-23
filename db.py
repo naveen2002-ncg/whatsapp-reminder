@@ -6,19 +6,32 @@ from pathlib import Path
 logger = logging.getLogger(__name__)
 
 # Use appropriate path for database based on environment
-# On Render: use /tmp for ephemeral storage (data lost on sleep)
+# On Railway: use /data for persistent storage
+# On Render: use /tmp for ephemeral storage
 # On local: use local folder
-if os.environ.get("RENDER"):
-    # Render free tier: use /tmp (ephemeral, data lost after sleep)
-    # For persistence, upgrade to Render Disk or use external DB
+RAILWAY_VOLUME_PATH = os.environ.get("RAILWAY_VOLUME_PATH", "")
+RENDER = os.environ.get("RENDER", "")
+
+if RAILWAY_VOLUME_PATH:
+    # Railway: use persistent volume
+    DB_PATH = Path(RAILWAY_VOLUME_PATH) / "reminders.db"
+    logger.info(f"[DIAGNOSTIC] Running on Railway, using DB_PATH={DB_PATH}")
+elif RENDER:
+    # Render: use /tmp (ephemeral, data lost after sleep)
     DB_PATH = Path("/tmp/reminders.db")
     logger.info(f"[DIAGNOSTIC] Running on Render, using DB_PATH={DB_PATH}")
 else:
+    # Local development
     DB_PATH = Path(__file__).resolve().parent / "reminders.db"
     logger.info(f"[DIAGNOSTIC] Running locally, using DB_PATH={DB_PATH}")
 
 # Ensure database directory exists
-DB_PATH.parent.mkdir(parents=True, exist_ok=True)
+try:
+    DB_PATH.parent.mkdir(parents=True, exist_ok=True)
+    logger.info(f"[DIAGNOSTIC] Database directory ensured: {DB_PATH.parent}")
+except Exception as e:
+    logger.error(f"[DIAGNOSTIC] Failed to create database directory: {e}")
+    raise
 
 
 def get_conn() -> sqlite3.Connection:
