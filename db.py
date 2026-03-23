@@ -6,13 +6,16 @@ from pathlib import Path
 logger = logging.getLogger(__name__)
 
 # Use appropriate path for database based on environment
-# On Railway: use /data for persistent storage
-# On Render: use /tmp for ephemeral storage
-# On local: use local folder
+# Priority: DATABASE_PATH > RAILWAY_VOLUME_PATH > RENDER > local
 RAILWAY_VOLUME_PATH = os.environ.get("RAILWAY_VOLUME_PATH", "")
 RENDER = os.environ.get("RENDER", "")
+DATABASE_PATH = os.environ.get("DATABASE_PATH", "")
 
-if RAILWAY_VOLUME_PATH:
+if DATABASE_PATH:
+    # Explicit DATABASE_PATH provided
+    DB_PATH = Path(DATABASE_PATH)
+    logger.info(f"[DIAGNOSTIC] Using explicit DATABASE_PATH={DB_PATH}")
+elif RAILWAY_VOLUME_PATH:
     # Railway: use persistent volume
     DB_PATH = Path(RAILWAY_VOLUME_PATH) / "reminders.db"
     logger.info(f"[DIAGNOSTIC] Running on Railway, using DB_PATH={DB_PATH}")
